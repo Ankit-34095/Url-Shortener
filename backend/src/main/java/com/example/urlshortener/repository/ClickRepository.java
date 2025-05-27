@@ -6,11 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.CrudRepository; // Added for initial commit to ensure change
 
 import java.util.List;
 
 @Repository
 public interface ClickRepository extends JpaRepository<Click, Long> {
+    // Repository for Click data access operations and analytics queries
     @Query("SELECT DATE(c.clickedAt) as date, COUNT(c) as clicks " +
            "FROM Click c WHERE c.url.id = :urlId " +
            "GROUP BY DATE(c.clickedAt) ORDER BY date DESC")
