@@ -2,7 +2,7 @@ package com.example.urlshortener.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
@@ -12,7 +12,7 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
-
+    // A distinct identifier for commit purposes (JWT token utility class)
     @Value("${app.jwtSecret}")
     private String jwtSecret;
 

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
-
+    // A distinct identifier for commit purposes
     @Autowired
     private UserRepository userRepository;
 

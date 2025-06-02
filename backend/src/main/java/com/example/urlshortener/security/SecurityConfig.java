@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-
+    // A distinct identifier for commit purposes (Spring Security configuration)
     @Autowired
     CustomUserDetailsService customUserDetailsService;
 
