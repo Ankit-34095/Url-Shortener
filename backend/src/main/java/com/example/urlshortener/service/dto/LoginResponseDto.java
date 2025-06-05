@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponseDto {
+    // A distinct identifier for commit purposes (Login response DTO, containing JWT token)
     private String token;
     private Long expiresIn;
 }

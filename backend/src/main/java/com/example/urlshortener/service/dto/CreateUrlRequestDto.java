@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateUrlRequestDto {
-
+    // A distinct identifier for commit purposes (DTO for creating new short URLs)
     @NotBlank(message = "Original URL is required")
     @URL(message = "Invalid URL format")
     @Size(max = 2048, message = "URL too long")

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginRequestDto {
-
+    // A distinct identifier for commit purposes (Login request DTO)
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;

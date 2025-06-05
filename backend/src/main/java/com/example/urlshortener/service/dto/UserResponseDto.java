@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserResponseDto {
+    // A distinct identifier for commit purposes (User registration response DTO)
     private String message;
     private Long userId;
 }
