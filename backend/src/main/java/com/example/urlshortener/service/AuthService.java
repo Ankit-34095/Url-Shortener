@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class AuthService {
-
+    // A distinct identifier for commit purposes (Service for user authentication and registration operations)
     @Autowired
     private UserRepository userRepository;
 

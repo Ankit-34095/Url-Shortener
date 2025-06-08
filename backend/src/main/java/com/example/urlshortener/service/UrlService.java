@@ -34,7 +34,7 @@ import java.util.Optional;
 @Service
 @Transactional
 public class UrlService {
-    // Service for handling URL shortening and management operations
+    // A distinct identifier for commit purposes (Service for URL shortening and management operations)
     @Autowired
     private UrlRepository urlRepository;
 
@@ -45,7 +45,7 @@ public class UrlService {
     private UserRepository userRepository;
 
     @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+    private RedisTemplate<String, String> redisTemplate; // Redis caching for performance
 
     @Autowired
     private ShortCodeGenerator shortCodeGenerator;
@@ -76,6 +76,7 @@ public class UrlService {
         url.setOriginalUrl(request.getOriginalUrl());
         url.setShortCode(shortCode);
         url.setTitle(request.getTitle());
+        url.setDescription(request.getDescription()); // Set description
         url.setExpiresAt(request.getExpiresAt());
 
         if (userId != null) {
@@ -91,7 +92,7 @@ public class UrlService {
 
         return mapToUrlResponseDto(savedUrl);
     }
-    
+
     @Transactional(readOnly = true)
     public String getOriginalUrl(String shortCode) {
         // Try Redis cache first
@@ -118,7 +119,7 @@ public class UrlService {
 
         return url.getOriginalUrl();
     }
-    
+
     public void recordClick(String shortCode, HttpServletRequest request) {
         Url url = urlRepository.findByShortCode(shortCode)
             .orElse(null);
@@ -139,13 +140,13 @@ public class UrlService {
             urlRepository.incrementClickCount(url.getId());
         }
     }
-    
+
     public void recordClickAsync(String shortCode, HttpServletRequest request) {
         // In a real application, this would use an async mechanism (e.g., @Async, Message Queue)
         // For now, it's a direct call, but named to indicate intent.
         recordClick(shortCode, request);
     }
-    
+
     @Transactional(readOnly = true)
     public Page<UrlResponseDto> getUserUrls(Long userId, Pageable pageable) {
         return urlRepository.findByUserIdAndIsActive(userId, true, pageable)
@@ -176,17 +177,26 @@ public class UrlService {
         if (request.getTitle() != null) {
             url.setTitle(request.getTitle());
         }
+        if (request.getShortCode() != null && !request.getShortCode().isEmpty()) { // Allow updating short code
+            if (urlRepository.existsByShortCode(request.getShortCode()) && !url.getShortCode().equals(request.getShortCode())) {
+                throw new ShortCodeAlreadyExistsException("Custom code already exists");
+            }
+            url.setShortCode(request.getShortCode());
+            redisTemplate.delete(URL_CACHE_PREFIX + shortCode); // Invalidate old cache
+        }
         if (request.getDescription() != null) {
             url.setDescription(request.getDescription());
         }
         if (request.getExpiresAt() != null) {
             url.setExpiresAt(request.getExpiresAt());
         }
-        // Note: is_active and short_code are not updatable via this endpoint based on typical use cases.
+        if (request.getIsActive() != null) { // Allow updating active status
+            url.setIsActive(request.getIsActive());
+        }
 
         Url updatedUrl = urlRepository.save(url);
         // Refresh cache immediately with updated URL
-        cacheUrlMapping(shortCode, updatedUrl.getOriginalUrl());
+        cacheUrlMapping(updatedUrl.getShortCode(), updatedUrl.getOriginalUrl()); // Use updated short code for cache key
     }
 
     public void deleteUrl(String shortCode, Long userId) {
@@ -202,10 +212,31 @@ public class UrlService {
         redisTemplate.delete(URL_CACHE_PREFIX + shortCode);
     }
 
+    public UrlDetailsDto deactivateUrl(String shortCode, Long userId) {
+        Url url = urlRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new UrlNotFoundException("URL not found"));
+        validateUserOwnership(url, userId);
+        url.setIsActive(false);
+        urlRepository.save(url);
+        redisTemplate.delete(URL_CACHE_PREFIX + shortCode);
+        return mapToUrlDetailsDto(url);
+    }
+
+    public UrlDetailsDto activateUrl(String shortCode, Long userId) {
+        Url url = urlRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new UrlNotFoundException("URL not found"));
+        validateUserOwnership(url, userId);
+        url.setIsActive(true);
+        urlRepository.save(url);
+        cacheUrlMapping(shortCode, url.getOriginalUrl());
+        return mapToUrlDetailsDto(url);
+    }
+
+
     private void cacheUrlMapping(String shortCode, String originalUrl) {
         redisTemplate.opsForValue().set(
-            URL_CACHE_PREFIX + shortCode, 
-            originalUrl, 
+            URL_CACHE_PREFIX + shortCode,
+            originalUrl,
             CACHE_TTL
         );
     }
@@ -232,9 +263,8 @@ public class UrlService {
             return false;
         }
     }
-    
+
     private String getClientIpAddress(HttpServletRequest request) {
-        // Standard headers for IP address
         String ipAddress = request.getHeader("X-Forwarded-For");
         if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
             ipAddress = request.getHeader("Proxy-Client-IP");
@@ -251,7 +281,6 @@ public class UrlService {
         if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
             ipAddress = request.getRemoteAddr();
         }
-        // For multiple IPs (e.g., from proxies), take the first one
         if (ipAddress != null && ipAddress.contains(",")) {
             ipAddress = ipAddress.split(",")[0].trim();
         }
@@ -271,7 +300,6 @@ public class UrlService {
             throw new UnauthorizedAccessException("Access denied");
         }
     }
-
 }
 
 
