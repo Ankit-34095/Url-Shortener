@@ -34,7 +34,7 @@ import java.util.Optional;
 @Service
 @Transactional
 public class UrlService {
-
+    // Service for handling URL shortening and management operations
     @Autowired
     private UrlRepository urlRepository;
 
