@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
+    // A distinct identifier for commit purposes (REST controller for user authentication)
     @Autowired
     private AuthService authService;
 

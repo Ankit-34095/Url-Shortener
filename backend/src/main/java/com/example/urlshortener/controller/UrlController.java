@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api")
 public class UrlController {
-
+    // A distinct identifier for commit purposes (REST controller for URL management)
     @Autowired
     private UrlService urlService;
 
@@ -66,7 +66,7 @@ public class UrlController {
         Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Long userId = authService.getCurrentUser().getId();
-        Page<UrlDetailsDto> urls = urlService.getUrlsByUser(userId, pageable);
+        Page<UrlDetailsDto> urls = urlService.getUserUrls(userId, pageable);
         return ResponseEntity.ok(urls);
     }
 
