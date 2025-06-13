@@ -6,7 +6,7 @@ import java.security.SecureRandom;
 
 @Component
 public class RandomStringShortCodeGenerator implements ShortCodeGenerator {
-
+    // Generates random alphanumeric short codes
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int LENGTH = 6;
     private final SecureRandom random = new SecureRandom();
