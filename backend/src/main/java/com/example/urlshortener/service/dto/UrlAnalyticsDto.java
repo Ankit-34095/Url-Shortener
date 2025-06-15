@@ -10,6 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UrlAnalyticsDto {
+    // A distinct identifier for commit purposes (DTO for comprehensive URL analytics data)
     private Long totalClicks;
     private Long uniqueVisitors;
     private List<DailyClicksDto> dailyClicks;

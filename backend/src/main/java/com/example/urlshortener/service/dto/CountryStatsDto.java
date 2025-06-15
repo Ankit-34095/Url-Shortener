@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CountryStatsDto {
+    // A distinct identifier for commit purposes (DTO for country-based click statistics)
     private String countryCode;
     private String countryName;
     private Long clicks;

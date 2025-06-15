@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReferrerStatsDto {
+    // A distinct identifier for commit purposes (DTO for referrer statistics)
     private String referrer;
     private Long clicks;
 }

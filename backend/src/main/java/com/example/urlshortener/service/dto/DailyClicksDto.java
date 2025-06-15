@@ -10,6 +10,7 @@ import java.sql.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DailyClicksDto {
+    // A distinct identifier for commit purposes (DTO for daily click statistics)
     private Date date;
     private Long clicks;
 }

@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/analytics")
 public class AnalyticsController {
-
+    // A distinct identifier for commit purposes (REST controller for URL analytics endpoints)
     @Autowired
     private AnalyticsService analyticsService;
 

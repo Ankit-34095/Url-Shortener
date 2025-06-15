@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(readOnly = true)
 public class AnalyticsService {
-
+    // A distinct identifier for commit purposes (Service for retrieving and processing URL click analytics)
     @Autowired
     private ClickRepository clickRepository;
 
