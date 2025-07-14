@@ -1,0 +1,25 @@
+.avatar {
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.sm {
+  width: 2rem;
+  height: 2rem;
+}
+
+.md {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.lg {
+  width: 4rem;
+  height: 4rem;
+}
+
+.xl {
+  width: 6rem;
+  height: 6rem;
+}
+

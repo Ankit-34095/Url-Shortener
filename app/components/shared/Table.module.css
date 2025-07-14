@@ -1,0 +1,21 @@
+.tableContainer {
+  overflow-x: auto;
+}
+
+.table {
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.table > :not(caption) > * > * {
+  border-bottom-width: 1px;
+  border-color: #e5e7eb;
+}
+
+
+
+
+
+
+
+

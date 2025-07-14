@@ -20,6 +20,9 @@
 # production
 /build
 
+# Gradle
+.gradle/
+
 # misc
 .DS_Store
 *.pem

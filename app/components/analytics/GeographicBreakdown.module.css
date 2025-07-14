@@ -1,0 +1,53 @@
+.noData {
+  text-align: center;
+  color: #6b7280;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+
+.tableHead {
+  background-color: #f9fafb;
+}
+
+.tableHeader {
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tableBody {
+  background-color: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tableRow {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tableData {
+  padding: 1rem 1.5rem;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+.countryName {
+  font-weight: 500;
+  color: #111827;
+}
+
+.clicks {
+  color: #6b7280;
+}
+
+
+
+
+
+
+
+

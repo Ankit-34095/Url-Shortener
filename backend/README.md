@@ -9,3 +9,4 @@ This is the Spring Boot backend for the URL Shortener application.
 - PostgreSQL database integration
 - Redis caching for URL mappings
 - Added detailed documentation for deployment.
+
