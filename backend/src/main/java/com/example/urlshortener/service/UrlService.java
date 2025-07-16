@@ -3,6 +3,7 @@ package com.example.urlshortener.service;
 import com.example.urlshortener.exception.InvalidUrlException;
 import com.example.urlshortener.exception.ShortCodeAlreadyExistsException;
 import com.example.urlshortener.exception.ShortCodeGenerationException;
+import com.example.urlshortener.exception.UnauthorizedAccessException;
 import com.example.urlshortener.exception.UrlExpiredException;
 import com.example.urlshortener.exception.UrlNotActiveException;
 import com.example.urlshortener.exception.UrlNotFoundException;
@@ -24,6 +25,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +151,28 @@ public class UrlService {
         }
     }
 
+    public void recordClick(String shortCode, String ipAddress, String userAgent, String referrer) {
+        Url url = urlRepository.findByShortCode(shortCode)
+            .orElse(null);
+
+        if (url != null) {
+            Click click = new Click();
+            click.setUrl(url);
+            click.setIpAddress(ipAddress);
+            click.setUserAgent(userAgent);
+            click.setReferrer(referrer);
+
+            // Async IP geolocation
+            geoLocationService.enrichClickWithLocation(click);
+
+            clickRepository.save(click);
+
+            // Update click count
+            urlRepository.incrementClickCount(url.getId());
+            logger.info("Recorded click for short code: {} from IP: {}", shortCode, click.getIpAddress());
+        }
+    }
+
     public void recordClickAsync(String shortCode, HttpServletRequest request) {
         // In a real application, this would use an async mechanism (e.g., @Async, Message Queue)
         // For now, it's a direct call, but named to indicate intent.
@@ -155,9 +180,28 @@ public class UrlService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UrlResponseDto> getUserUrls(Long userId, Pageable pageable) {
+    public String getOriginalUrlAndLogClick(String shortCode, String ipAddress, String userAgent, String referrer) {
+        Url url = urlRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new UrlNotFoundException("URL not found"));
+
+        if (!url.getIsActive()) {
+            throw new UrlNotActiveException("URL is not active");
+        }
+
+        if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new UrlExpiredException("URL has expired");
+        }
+
+        // Log the click
+        recordClick(shortCode, ipAddress, userAgent, referrer);
+
+        return url.getOriginalUrl();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UrlDetailsDto> getUserUrls(Long userId, Pageable pageable) {
         return urlRepository.findByUserIdAndIsActive(userId, true, pageable)
-                .map(this::mapToUrlResponseDto);
+                .map(this::mapToUrlDetailsDto);
     }
 
     @Transactional(readOnly = true)
@@ -168,7 +212,7 @@ public class UrlService {
         return mapToUrlDetailsDto(url);
     }
 
-    public void updateUrl(String shortCode, UpdateUrlRequestDto request, Long userId) {
+    public UrlDetailsDto updateUrl(String shortCode, UpdateUrlRequestDto request, Long userId) {
         Url url = urlRepository.findByShortCode(shortCode)
                 .orElseThrow(() -> new UrlNotFoundException("URL not found"));
         validateUserOwnership(url, userId);
@@ -205,6 +249,7 @@ public class UrlService {
         // Refresh cache immediately with updated URL
         cacheUrlMapping(updatedUrl.getShortCode(), updatedUrl.getOriginalUrl()); // Use updated short code for cache key
         logger.info("Updated URL {} (short code: {}) by user {}", updatedUrl.getId(), updatedUrl.getShortCode(), userId);
+        return mapToUrlDetailsDto(updatedUrl);
     }
 
     public void deleteUrl(String shortCode, Long userId) {
@@ -303,7 +348,7 @@ public class UrlService {
     }
 
     private UrlDetailsDto mapToUrlDetailsDto(Url url) {
-        return new UrlDetailsDto(url.getId(), url.getOriginalUrl(), url.getShortCode(), url.getTitle(), url.getDescription(), url.getTotalClicks(), url.getCreatedAt(), url.getExpiresAt());
+        return new UrlDetailsDto(url.getId(), url.getOriginalUrl(), url.getShortCode(), url.getTitle(), url.getDescription(), url.getTotalClicks(), url.getCreatedAt(), url.getExpiresAt(), url.getIsActive());
     }
 
     private void validateUserOwnership(Url url, Long userId) {

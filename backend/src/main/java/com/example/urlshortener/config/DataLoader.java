@@ -47,12 +47,12 @@ public class DataLoader {
             userRepository.saveAll(Arrays.asList(user1, user2));
 
             // Create URLs for user1
-            Url url1 = new Url(null, user1, "https://www.google.com", shortCodeGenerator.generate(), "Google Search", "The world\'s most popular search engine", 0L, true, LocalDateTime.now(), LocalDateTime.now().plusMonths(6), new ArrayList<>());
-            Url url2 = new Url(null, user1, "https://spring.io", shortCodeGenerator.generate(), "Spring Framework", "Pivotal\'s Spring Framework homepage", 0L, true, LocalDateTime.now(), null, new ArrayList<>());
+            Url url1 = new Url(null, user1, "https://www.google.com", shortCodeGenerator.generate(), "Google Search", "The world\'s most popular search engine", 0L, true, LocalDateTime.now().plusMonths(6), LocalDateTime.now(), LocalDateTime.now(), new ArrayList<>());
+            Url url2 = new Url(null, user1, "https://spring.io", shortCodeGenerator.generate(), "Spring Framework", "Pivotal\'s Spring Framework homepage", 0L, true, null, LocalDateTime.now(), LocalDateTime.now(), new ArrayList<>());
             urlRepository.saveAll(Arrays.asList(url1, url2));
 
             // Create URLs for user2
-            Url url3 = new Url(null, user2, "https://github.com", shortCodeGenerator.generate(), "GitHub", "Where the world builds software", 0L, true, LocalDateTime.now(), LocalDateTime.now().plusYears(1), new ArrayList<>());
+            Url url3 = new Url(null, user2, "https://github.com", shortCodeGenerator.generate(), "GitHub", "Where the world builds software", 0L, true, LocalDateTime.now().plusYears(1), LocalDateTime.now(), LocalDateTime.now(), new ArrayList<>());
             urlRepository.save(url3);
 
             // Create some clicks for url1
