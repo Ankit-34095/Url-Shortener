@@ -7,6 +7,9 @@ COPY gradle gradle
 COPY backend/build.gradle ./build.gradle
 COPY backend/src src
 
+# Make gradlew executable
+RUN chmod +x gradlew
+
 RUN ./gradlew bootJar
 
 FROM openjdk:17-jdk-slim
