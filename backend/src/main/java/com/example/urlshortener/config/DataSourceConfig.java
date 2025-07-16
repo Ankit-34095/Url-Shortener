@@ -1,6 +1,7 @@
 package com.example.urlshortener.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -10,9 +11,9 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
-public class DatabaseConfig {
+public class DataSourceConfig {
 
-    @Value("${DATABASE_URL:jdbc:postgresql://localhost:5432/urlshortener}")
+    @Value("${DATABASE_URL:}")
     private String databaseUrl;
 
     @Value("${DB_USERNAME:shortener_user}")
@@ -23,12 +24,13 @@ public class DatabaseConfig {
 
     @Bean
     @Primary
+    @ConditionalOnProperty(name = "DATABASE_URL")
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
         
         // Convert postgresql:// to jdbc:postgresql:// if needed
         String jdbcUrl = databaseUrl;
-        if (databaseUrl.startsWith("postgresql://")) {
+        if (databaseUrl != null && databaseUrl.startsWith("postgresql://")) {
             jdbcUrl = databaseUrl.replace("postgresql://", "jdbc:postgresql://");
         }
         
@@ -36,6 +38,13 @@ public class DatabaseConfig {
         config.setUsername(username);
         config.setPassword(password);
         config.setDriverClassName("org.postgresql.Driver");
+        
+        // Connection pool settings
+        config.setMaximumPoolSize(10);
+        config.setMinimumIdle(2);
+        config.setConnectionTimeout(30000);
+        config.setIdleTimeout(600000);
+        config.setMaxLifetime(1800000);
         
         return new HikariDataSource(config);
     }
