@@ -4,8 +4,10 @@ WORKDIR /app
 
 COPY gradlew .
 COPY gradle gradle
-COPY backend/build.gradle ./build.gradle
-COPY backend/src src
+COPY build.gradle .
+COPY src src
+
+RUN chmod +x gradlew
 
 RUN ./gradlew bootJar
 
