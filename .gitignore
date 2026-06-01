@@ -36,7 +36,7 @@ backend/.gradle/
 
 # temp
 temp-nextjs-app/
-src/
+/src/
 
 # debug
 npm-debug.log*
