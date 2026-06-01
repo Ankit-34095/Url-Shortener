@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim AS build
+FROM eclipse-temurin:17-jdk AS build
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN chmod +x gradlew
 
 RUN ./gradlew bootJar
 
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
