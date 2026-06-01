@@ -6,8 +6,6 @@ import com.example.urlshortener.service.dto.CreateUrlRequestDto;
 import com.example.urlshortener.service.dto.UrlDetailsDto;
 import com.example.urlshortener.service.dto.UrlResponseDto;
 import com.example.urlshortener.service.dto.UpdateUrlRequestDto;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,10 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.net.URI;
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api")
@@ -45,15 +39,6 @@ public class UrlController {
     public ResponseEntity<UrlResponseDto> shortenPublicUrl(@Valid @RequestBody CreateUrlRequestDto createUrlRequest) {
         UrlResponseDto response = urlService.createShortUrl(createUrlRequest, null);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{shortCode}")
-    public void redirect(@PathVariable String shortCode, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String userAgent = request.getHeader("User-Agent");
-        String ipAddress = request.getRemoteAddr();
-        String referrer = request.getHeader("Referer");
-        String originalUrl = urlService.getOriginalUrlAndLogClick(shortCode, ipAddress, userAgent, referrer);
-        response.sendRedirect(originalUrl);
     }
 
     @GetMapping("/urls")

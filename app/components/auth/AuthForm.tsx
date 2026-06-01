@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/shared/Toast';
 import styles from './AuthForm.module.css';
-import api from '@/app/lib/api'; // Import the API utility
+import api, { formatApiError } from '@/lib/api';
 import { setCookie } from 'cookies-next';
+import { useAuth } from '@/lib/auth-context';
 
 interface AuthFormProps {
   type: 'login' | 'signup';
@@ -15,17 +16,15 @@ interface AuthFormProps {
 interface LoginRequestDto {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 interface LoginResponseDto {
-  accessToken: string;
-  tokenType: string;
-  user: {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-  };
+  token: string;
+  expiresIn: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 }
 
 interface RegisterRequestDto {
@@ -36,73 +35,87 @@ interface RegisterRequestDto {
 }
 
 interface UserResponseDto {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
+  message?: string;
+  userId?: number;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const showToast = useToast();
+  const { refreshUser } = useAuth();
 
   const isLogin = type === 'login';
+
+  const getCookieMaxAge = (expiresIn: number) => {
+    return Math.max(0, Math.floor((expiresIn - Date.now()) / 1000));
+  };
+
+  const saveSession = async (response: LoginResponseDto, fallbackEmail: string, fallbackName?: string) => {
+    setCookie('token', response.token, {
+      maxAge: getCookieMaxAge(response.expiresIn),
+      path: '/',
+      sameSite: 'lax',
+    });
+
+    localStorage.setItem('authToken', response.token);
+
+    const userName = [response.firstName, response.lastName].filter(Boolean).join(' ') || fallbackName || '';
+    if (userName) {
+      localStorage.setItem('userName', userName);
+    }
+
+    localStorage.setItem('userEmail', response.email || fallbackEmail);
+    await refreshUser();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
     if (isLogin) {
       try {
         const response: LoginResponseDto = await api<LoginResponseDto>('/auth/login', {
           method: 'POST',
-          body: JSON.stringify({ email, password } as LoginRequestDto),
+          body: JSON.stringify({ email, password, rememberMe } as LoginRequestDto),
         });
-        setCookie('token', response.accessToken, { maxAge: rememberMe ? 60 * 60 * 24 * 7 : undefined }); // 7 days if rememberMe
+        await saveSession(response, email);
         showToast('Login successful!', 'success');
-        router.push('/dashboard');
+        router.replace('/dashboard');
       } catch (err: any) {
-        const errorMessage = err.message || 'Login failed.';
+        const errorMessage = formatApiError(err, 'Login failed.');
         setError(errorMessage);
         showToast(errorMessage, 'error');
       }
-    } else { // Signup
+    } else {
       if (password !== confirmPassword) {
         const errorMessage = 'Passwords do not match.';
         setError(errorMessage);
         showToast(errorMessage, 'error');
-      } else if (!termsAccepted) {
-        const errorMessage = 'You must accept the terms and conditions.';
-        setError(errorMessage);
-        showToast(errorMessage, 'error');
-      } else if (fullName && email && password) {
-        // Split full name into first and last name
-        const nameParts = fullName.split(' ');
-        const firstName = nameParts[0];
-        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-
+      } else if (firstName && lastName && email && password) {
         try {
           const response: UserResponseDto = await api<UserResponseDto>('/auth/register', {
             method: 'POST',
             body: JSON.stringify({ email, password, firstName, lastName } as RegisterRequestDto),
           });
-          console.log('Signup successful', response);
-          showToast('Signup successful!', 'success');
-          router.push('/login'); // Redirect to login page after successful signup
+          const loginResponse = await api<LoginResponseDto>('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password, rememberMe: false } as LoginRequestDto),
+          });
+          await saveSession(loginResponse, email, [firstName, lastName].filter(Boolean).join(' '));
+          showToast('Signup successful! You are logged in.', 'success');
+          router.replace('/dashboard');
         } catch (err: any) {
-          const errorMessage = err.message || 'Signup failed.';
+          const errorMessage = formatApiError(err, 'Signup failed.');
           setError(errorMessage);
           showToast(errorMessage, 'error');
         }
@@ -123,17 +136,31 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         </h2>
         <form onSubmit={handleSubmit} className={styles.authForm}>
           {!isLogin && (
-            <div>
-              <label className={styles.formLabel} htmlFor="fullName">Full Name</label>
-              <input
-                type="text"
-                id="fullName"
-                className={styles.formInput}
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required={!isLogin}
-              />
+            <div className={styles.nameRow}>
+              <div>
+                <label className={styles.formLabel} htmlFor="firstName">First Name</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  className={styles.formInput}
+                  placeholder="John"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel} htmlFor="lastName">Last Name</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  className={styles.formInput}
+                  placeholder="Doe"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
             </div>
           )}
           <div>
@@ -170,7 +197,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                required={!isLogin}
+                required
               />
             </div>
           )}
@@ -187,21 +214,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                 />
                 <label htmlFor="rememberMe" className={styles.checkboxLabel}>Remember me</label>
               </div>
-              <Link href="/forgot-password" className={styles.forgotPasswordLink}>Forgot password?</Link>
             </div>
-          ) : (
-            <div className={styles.checkboxWrapper}>
-              <input
-                type="checkbox"
-                id="termsAccepted"
-                className={styles.checkbox}
-                checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
-                required
-              />
-              <label htmlFor="termsAccepted" className={styles.termsLabel}>I agree to the <Link href="/terms" className={styles.termsLink}>Terms and Conditions</Link></label>
-            </div>
-          )}
+          ) : null}
 
           {error && (
             <div className={styles.errorContainer}>
@@ -228,21 +242,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
               Already have an account? <Link href="/login" className={styles.signupLink}>Login</Link>
             </p>
           )}
-        </div>
-
-        {/* Optional: Social Login Buttons */}
-        <div className={styles.socialLoginContainer}>
-          <div className={styles.divider}>
-            <div className={styles.dividerLine}></div>
-            <span className={styles.dividerText}>Or</span>
-            <div className={styles.dividerLine}></div>
-          </div>
-          <button
-            className={styles.googleButton}
-          >
-            <img src="/google-icon.svg" alt="Google" className={styles.googleIcon} />
-            Continue with Google
-          </button>
         </div>
       </div>
     </div>

@@ -1,25 +1,59 @@
 'use client';
 
-import React, { useState } from 'react';
-import Avatar from '@/components/shared/Avatar';
+import React, { useEffect, useState } from 'react';
 import Input from '@/components/shared/Input';
 import Button from '@/components/shared/Button';
 import Card from '@/components/shared/Card';
 import { useToast } from '@/components/shared/Toast';
+import { useAuth } from '@/lib/auth-context';
+import api, { formatApiError } from '@/lib/api';
+import { getCookie } from 'cookies-next';
 import styles from './ProfileForm.module.css';
 
+interface UserProfile {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
 const ProfileForm = () => {
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('john.doe@example.com');
+  const { user } = useAuth();
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('https://via.placeholder.com/150');
   const showToast = useToast();
+
+  useEffect(() => {
+    setFirstName(user?.firstName || '');
+    setLastName(user?.lastName || '');
+    setEmail(user?.email || '');
+  }, [user]);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const token = getCookie('token') as string | Promise<string | undefined> | undefined;
+      if (!token) return;
+
+      try {
+        const profile = await api<UserProfile>('/auth/me', { token });
+        setFirstName(profile.firstName || '');
+        setLastName(profile.lastName || '');
+        setEmail(profile.email || '');
+        localStorage.setItem('userName', [profile.firstName, profile.lastName].filter(Boolean).join(' '));
+        localStorage.setItem('userEmail', profile.email || '');
+      } catch (err: any) {
+        showToast(formatApiError(err, 'Failed to load profile.'), 'error');
+      }
+    };
+
+    loadProfile();
+  }, [showToast]);
 
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Updating profile:', { name, email, avatarUrl });
     showToast('Profile updated successfully!', 'success');
   };
 
@@ -33,7 +67,6 @@ const ProfileForm = () => {
       showToast('New password cannot be the same as current password.', 'warning');
       return;
     }
-    console.log('Changing password:', { currentPassword, newPassword });
     showToast('Password changed successfully!', 'success');
     setCurrentPassword('');
     setNewPassword('');
@@ -44,14 +77,10 @@ const ProfileForm = () => {
     <Card className={styles.profileCard}>
       <h2 className={styles.sectionTitle}>Profile Information</h2>
       <form onSubmit={handleProfileUpdate} className={styles.form}>
-        <div className={styles.avatarContainer}>
-          <Avatar src={avatarUrl} alt="User Avatar" size="lg" />
-          <div>
-            <p className={styles.userName}>{name}</p>
-            <button type="button" className={styles.changeAvatarButton}>Change Avatar</button>
-          </div>
+        <div className={styles.nameRow}>
+          <Input label="First Name" id="firstName" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+          <Input label="Last Name" id="lastName" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
         </div>
-        <Input label="Full Name" id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} />
         <Input label="Email Address" id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled />
         <Button type="submit" variant="primary">Save Profile</Button>
       </form>

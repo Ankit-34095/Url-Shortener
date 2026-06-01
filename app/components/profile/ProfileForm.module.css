@@ -16,39 +16,15 @@
   gap: 1rem;
 }
 
-.avatarContainer {
+.nameRow {
   display: flex;
-  align-items: center;
   gap: 1rem;
 }
 
-.userName {
-  font-size: 1.125rem;
-  font-weight: 500;
-}
-
-.changeAvatarButton {
-  color: #2563eb;
-  text-decoration: underline;
-  font-size: 0.875rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  outline: none;
-}
-
-.changeAvatarButton:focus {
-  outline: none;
+.nameRow > * {
+  flex: 1;
 }
 
 .divider {
   border-color: #e5e7eb;
 }
-
-
-
-
-
-
-
-

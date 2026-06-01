@@ -2,23 +2,30 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import styles from './Sidebar.module.css';
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
 
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'My URLs', href: '/dashboard/my-urls' }, // Assuming a sub-route for My URLs
-    { name: 'Analytics', href: '/dashboard/analytics' }, // Analytics will have dynamic sub-routes
-    { name: 'Profile/Settings', href: '/dashboard/profile' },
-    { name: 'Logout', href: '/logout' }, // Assuming a logout route
+    { name: 'My URLs', href: '/dashboard/my-urls' },
+    { name: 'Analytics', href: '/dashboard/analytics' },
+    { name: 'Profile / Settings', href: '/dashboard/profile' },
   ];
 
   return (
     <aside className={styles.sidebar}>
-      <h2 className={styles.title}>Navigation</h2>
+      <h2 className={styles.title}>URL Shortener</h2>
       {navLinks.map((link) => (
         <Link
           key={link.name}
@@ -30,6 +37,10 @@ const Sidebar = () => {
           {link.name}
         </Link>
       ))}
+      <div className={styles.spacer} />
+      <button onClick={handleLogout} className={styles.logoutButton}>
+        Logout
+      </button>
     </aside>
   );
 };

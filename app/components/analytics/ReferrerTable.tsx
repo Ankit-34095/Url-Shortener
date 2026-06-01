@@ -14,7 +14,7 @@ interface ReferrerTableProps {
 
 const ReferrerTable: React.FC<ReferrerTableProps> = ({ data }) => {
   if (!data || data.length === 0) {
-    return <div className={styles.noData}>No referrer data available.</div>;
+    return <div className={styles.noData}>Data not found.</div>;
   }
 
   return (

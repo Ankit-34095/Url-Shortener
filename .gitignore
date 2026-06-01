@@ -22,10 +22,21 @@
 
 # Gradle
 .gradle/
+backend/bin/
+backend/build/
+backend/.gradle/
+
+# IDE
+.idea/
+.vscode/
 
 # misc
 .DS_Store
 *.pem
+
+# temp
+temp-nextjs-app/
+src/
 
 # debug
 npm-debug.log*

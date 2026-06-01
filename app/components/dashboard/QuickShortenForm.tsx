@@ -5,11 +5,11 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useToast } from '@/components/shared/Toast';
 import styles from './QuickShortenForm.module.css';
-import api from '@/app/lib/api';
+import api, { formatApiError } from '@/lib/api';
 import { getCookie } from 'cookies-next';
 
 interface QuickShortenFormProps {
-  onShorten: (url: { shortCode: string; fullShortenedUrl: string; originalUrl: string; }) => void;
+  onShorten: (url: { shortCode: string; shortUrl: string; originalUrl: string; }) => void;
 }
 
 interface CreateUrlRequestDto {
@@ -22,7 +22,7 @@ interface CreateUrlRequestDto {
 
 interface UrlResponseDto {
   shortCode: string;
-  fullShortenedUrl: string;
+  shortUrl: string;
   originalUrl: string;
 }
 
@@ -30,8 +30,7 @@ const QuickShortenForm: React.FC<QuickShortenFormProps> = ({ onShorten }) => {
   const [longUrl, setLongUrl] = useState('');
   const [customAlias, setCustomAlias] = useState('');
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
-  const [passwordProtected, setPasswordProtected] = useState(false);
-  const [tags, setTags] = useState('');
+
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
   const showToast = useToast();
@@ -46,7 +45,7 @@ const QuickShortenForm: React.FC<QuickShortenFormProps> = ({ onShorten }) => {
       return;
     }
 
-    const token = getCookie('token');
+    const token = getCookie('token') as string | undefined;
     if (!token) {
       showToast('You must be logged in to shorten URLs.', 'error');
       setLoading(false);
@@ -72,10 +71,9 @@ const QuickShortenForm: React.FC<QuickShortenFormProps> = ({ onShorten }) => {
       setLongUrl('');
       setCustomAlias('');
       setExpirationDate(null);
-      setPasswordProtected(false);
-      setTags('');
+
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to shorten URL.';
+      const errorMessage = formatApiError(err, 'Failed to shorten URL.');
       showToast(errorMessage, 'error');
     }
 
@@ -126,7 +124,7 @@ const QuickShortenForm: React.FC<QuickShortenFormProps> = ({ onShorten }) => {
               <DatePicker
                 id="expirationDate"
                 selected={expirationDate}
-                onChange={(date) => setExpirationDate(date)}
+                onChange={(date: Date | null) => setExpirationDate(date)}
                 dateFormat="yyyy/MM/dd"
                 minDate={new Date()}
                 className={styles.inputField}
@@ -134,28 +132,7 @@ const QuickShortenForm: React.FC<QuickShortenFormProps> = ({ onShorten }) => {
               />
             </div>
 
-            <div className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                id="passwordProtected"
-                className={styles.checkbox}
-                checked={passwordProtected}
-                onChange={(e) => setPasswordProtected(e.target.checked)}
-              />
-              <label htmlFor="passwordProtected" className={styles.checkboxLabel}>Password Protect</label>
-            </div>
 
-            <div>
-              <label htmlFor="tags" className={styles.label}>Tags (Optional, comma-separated)</label>
-              <input
-                type="text"
-                id="tags"
-                className={styles.inputField}
-                placeholder="work, marketing, campaign"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-              />
-            </div>
           </div>
         )}
 

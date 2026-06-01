@@ -19,15 +19,23 @@ public class JwtTokenProvider {
     @Value("${app.jwtExpirationInMs}")
     private int jwtExpirationInMs;
 
+    @Value("${app.jwtRememberMeExpirationInMs:259200000}")
+    private int jwtRememberMeExpirationInMs;
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
     public String generateToken(Authentication authentication) {
+        return generateToken(authentication, false);
+    }
+
+    public String generateToken(Authentication authentication, boolean rememberMe) {
         User userPrincipal = (User) authentication.getPrincipal();
 
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        int expiration = rememberMe ? jwtRememberMeExpirationInMs : jwtExpirationInMs;
+        Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .setSubject(userPrincipal.getUsername())
@@ -72,7 +80,6 @@ public class JwtTokenProvider {
         return false;
     }
 }
-
 
 
 

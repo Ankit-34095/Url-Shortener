@@ -6,6 +6,7 @@ import com.example.urlshortener.repository.UserRepository;
 import com.example.urlshortener.service.dto.LoginRequestDto;
 import com.example.urlshortener.service.dto.LoginResponseDto;
 import com.example.urlshortener.service.dto.RegisterRequestDto;
+import com.example.urlshortener.service.dto.UserProfileDto;
 import com.example.urlshortener.service.dto.UserResponseDto;
 import com.example.urlshortener.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,10 +59,12 @@ public class AuthService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtTokenProvider.generateToken(authentication);
+        String jwt = jwtTokenProvider.generateToken(authentication, Boolean.TRUE.equals(loginRequest.getRememberMe()));
         Long expiresIn = jwtTokenProvider.getExpirationDateFromToken(jwt).getTime();
+        User user = userRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + loginRequest.getEmail()));
 
-        return new LoginResponseDto(jwt, expiresIn);
+        return new LoginResponseDto(jwt, expiresIn, user.getFirstName(), user.getLastName(), user.getEmail());
     }
 
     public User getCurrentUser() {
@@ -69,10 +72,12 @@ public class AuthService {
         return userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
     }
+
+    public UserProfileDto getCurrentUserProfile() {
+        User user = getCurrentUser();
+        return new UserProfileDto(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName());
+    }
 }
-
-
-
 
 
 

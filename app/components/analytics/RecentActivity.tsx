@@ -14,7 +14,7 @@ interface RecentActivityProps {
 
 const RecentActivity: React.FC<RecentActivityProps> = ({ data }) => {
   if (!data || data.length === 0) {
-    return <div className={styles.noData}>No recent activity data available.</div>;
+    return <div className={styles.noData}>Data not found.</div>;
   }
 
   return (

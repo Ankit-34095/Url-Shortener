@@ -4,12 +4,14 @@ import com.example.urlshortener.service.AuthService;
 import com.example.urlshortener.service.dto.LoginRequestDto;
 import com.example.urlshortener.service.dto.LoginResponseDto;
 import com.example.urlshortener.service.dto.RegisterRequestDto;
+import com.example.urlshortener.service.dto.UserProfileDto;
 import com.example.urlshortener.service.dto.UserResponseDto;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,8 +34,12 @@ public class AuthController {
         LoginResponseDto response = authService.loginUser(loginRequest);
         return ResponseEntity.ok(response);
     }
-}
 
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileDto> getCurrentUser() {
+        return ResponseEntity.ok(authService.getCurrentUserProfile());
+    }
+}
 
 
 

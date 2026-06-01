@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { MdContentCopy, MdOutlineAnalytics, MdEdit, MdDelete } from 'react-icons/md';
+import { MdContentCopy, MdOutlineAnalytics, MdDelete } from 'react-icons/md';
 import { useToast } from '@/components/shared/Toast';
 import styles from './URLsTable.module.css';
-import api from '@/app/lib/api';
+import api, { formatApiError } from '@/lib/api';
 import { getCookie } from 'cookies-next';
 
 interface URLItem {
@@ -23,28 +23,29 @@ interface UrlPageResponse {
   content: URLItem[];
   totalPages: number;
   totalElements: number;
-  number: number; // current page number (0-indexed)
+  number: number;
   size: number;
 }
 
 interface URLsTableProps {
-  // urls: URLItem[]; // No longer passed as prop, will be fetched internally
+  refreshKey?: number;
 }
 
-const URLsTable: React.FC<URLsTableProps> = () => {
+const URLsTable: React.FC<URLsTableProps> = ({ refreshKey }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(0); // Backend is 0-indexed
+  const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage] = useState(5);
   const [urls, setUrls] = useState<URLItem[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const showToast = useToast();
 
   const fetchUrls = async () => {
     setLoading(true);
-    const token = getCookie('token');
+    setError(null);
+    const token = getCookie('token') as string | undefined;
     if (!token) {
-      showToast('You must be logged in to view URLs.', 'error');
       setLoading(false);
       return;
     }
@@ -60,7 +61,8 @@ const URLsTable: React.FC<URLsTableProps> = () => {
       setUrls(response.content);
       setTotalPages(response.totalPages);
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to fetch URLs.';
+      const errorMessage = formatApiError(err, 'Failed to fetch URLs.');
+      setError(errorMessage);
       showToast(errorMessage, 'error');
     }
     setLoading(false);
@@ -68,7 +70,7 @@ const URLsTable: React.FC<URLsTableProps> = () => {
 
   useEffect(() => {
     fetchUrls();
-  }, [currentPage]); // Refetch when currentPage changes
+  }, [currentPage, refreshKey]);
 
   const filteredUrls = urls.filter(
     (url) =>
@@ -76,41 +78,32 @@ const URLsTable: React.FC<URLsTableProps> = () => {
       url.shortCode.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // No longer needed with backend pagination
-  // const indexOfLastItem = (currentPage + 1) * itemsPerPage;
-  // const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  // const currentItems = filteredUrls.slice(indexOfFirstItem, indexOfLastItem);
-  // const totalPages = Math.ceil(filteredUrls.length / itemsPerPage);
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber - 1); // Adjust for 0-indexed backend
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber - 1);
 
   const handleCopy = (shortUrl: string) => {
-    navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '')}/${shortUrl}`);
-    showToast(`Copied ${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '')}/${shortUrl} to clipboard!`, 'success');
+    const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081/api').replace('/api', '');
+    navigator.clipboard.writeText(`${baseUrl}/r/${shortUrl}`);
+    showToast(`Copied ${baseUrl}/r/${shortUrl} to clipboard!`, 'success');
   };
 
   const handleDelete = (id: number, shortCode: string) => {
     if (window.confirm('Are you sure you want to delete this URL?')) {
-      const token = getCookie('token');
-      if (!token) {
-        showToast('You must be logged in to delete URLs.', 'error');
-        return;
-      }
+      const token = getCookie('token') as string | undefined;
+      if (!token) return;
 
-      try {
-        api<void>(`/urls/${shortCode}`, {
-          method: 'DELETE',
-          token: token,
-        }).then(() => {
-          showToast(`URL with short code ${shortCode} deleted.`, 'info');
-          fetchUrls(); // Refresh the list after deletion
-        });
-      } catch (err: any) {
-        const errorMessage = err.message || 'Failed to delete URL.';
-        showToast(errorMessage, 'error');
-      }
+      api<void>(`/urls/${shortCode}`, {
+        method: 'DELETE',
+        token: token,
+      }).then(() => {
+        showToast(`URL with short code ${shortCode} deleted.`, 'info');
+        fetchUrls();
+      }).catch(() => {
+        showToast('Failed to delete URL.', 'error');
+      });
     }
   };
+
+  const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081/api').replace('/api', '');
 
   return (
     <div className={styles.tableCard}>
@@ -118,6 +111,10 @@ const URLsTable: React.FC<URLsTableProps> = () => {
 
       {loading ? (
         <p>Loading URLs...</p>
+      ) : error ? (
+        <p className={styles.emptyState}>{error}</p>
+      ) : filteredUrls.length === 0 ? (
+        <p className={styles.emptyState}>Data not found.</p>
       ) : (
         <>
           <div className={styles.controlsContainer}>
@@ -128,7 +125,6 @@ const URLsTable: React.FC<URLsTableProps> = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            {/* Add filter/sort options here if needed */}
           </div>
 
           <div className={styles.desktopTableContainer}>
@@ -146,7 +142,7 @@ const URLsTable: React.FC<URLsTableProps> = () => {
                 {filteredUrls.map((url) => (
                   <tr key={url.id} className={styles.tableRow}>
                     <td className={`${styles.tableData} ${styles.shortUrl}`}>
-                      <Link href={`${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '')}/${url.shortCode}`} target="_blank" rel="noopener noreferrer">{`${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '')}/${url.shortCode}`}</Link>
+                      <Link href={`${baseUrl}/r/${url.shortCode}`} target="_blank" rel="noopener noreferrer">{`${baseUrl}/r/${url.shortCode}`}</Link>
                     </td>
                     <td className={`${styles.tableData} ${styles.originalUrl}`}>
                       <Link href={url.originalUrl} target="_blank" rel="noopener noreferrer">{url.originalUrl}</Link>
@@ -160,9 +156,6 @@ const URLsTable: React.FC<URLsTableProps> = () => {
                       <Link href={`/dashboard/analytics/${url.shortCode}`} className={`${styles.actionButton} ${styles.analytics}`} title="View Analytics">
                         <MdOutlineAnalytics size={20} />
                       </Link>
-                      <button onClick={() => console.log('Edit', url.id)} className={`${styles.actionButton} ${styles.edit}`} title="Edit">
-                        <MdEdit size={20} />
-                      </button>
                       <button onClick={() => handleDelete(url.id, url.shortCode)} className={`${styles.actionButton} ${styles.delete}`} title="Delete">
                         <MdDelete size={20} />
                       </button>
@@ -173,13 +166,12 @@ const URLsTable: React.FC<URLsTableProps> = () => {
             </table>
           </div>
 
-          {/* Mobile Card Layout */}
           <div className={styles.mobileCardContainer}>
             {filteredUrls.map((url) => (
               <div key={url.id} className={styles.mobileCard}>
                 <div className={styles.mobileCardHeader}>
-                  <Link href={`${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '')}/${url.shortCode}`} target="_blank" rel="noopener noreferrer" className={styles.mobileShortUrl}>
-                    {`${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '')}/${url.shortCode}`}
+                  <Link href={`${baseUrl}/r/${url.shortCode}`} target="_blank" rel="noopener noreferrer" className={styles.mobileShortUrl}>
+                    {`${baseUrl}/r/${url.shortCode}`}
                   </Link>
                   <span className={styles.mobileDate}>{new Date(url.createdAt).toLocaleDateString()}</span>
                 </div>
@@ -188,14 +180,12 @@ const URLsTable: React.FC<URLsTableProps> = () => {
                 <div className={styles.mobileActions}>
                   <button onClick={() => handleCopy(url.shortCode)} className={styles.mobileActionButton}><MdContentCopy className={styles.iconMarginRight} /> Copy</button>
                   <Link href={`/dashboard/analytics/${url.shortCode}`} className={`${styles.mobileActionButton} ${styles.analytics}`}><MdOutlineAnalytics className={styles.iconMarginRight} /> Analytics</Link>
-                  <button onClick={() => console.log('Edit', url.id)} className={`${styles.mobileActionButton} ${styles.edit}`}><MdEdit className={styles.iconMarginRight} /> Edit</button>
                   <button onClick={() => handleDelete(url.id, url.shortCode)} className={`${styles.mobileActionButton} ${styles.delete}`}><MdDelete className={styles.iconMarginRight} /> Delete</button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className={styles.paginationContainer}>
               {Array.from({ length: totalPages }, (_, i) => (

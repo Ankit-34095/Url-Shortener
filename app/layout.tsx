@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import Providers from '@/components/providers/Providers';
 import styles from './layout.module.css';
 
@@ -32,9 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${styles.body}`}
       >
         <Providers>
-          <Header />
-          <main className={styles.mainContent}>{children}</main>
-          <Footer />
+          {children}
         </Providers>
       </body>
     </html>

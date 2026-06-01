@@ -1,12 +1,7 @@
 import React from 'react';
-import styles from './Footer.module.css';
 
 const Footer = () => {
-  return (
-    <footer className={styles.footer}>
-      <p>&copy; {new Date().getFullYear()} URL Shortener. All rights reserved.</p>
-    </footer>
-  );
+  return null;
 };
 
 export default Footer;

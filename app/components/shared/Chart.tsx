@@ -14,7 +14,7 @@ interface ChartProps {
 const Chart: React.FC<ChartProps> = ({ children, width = "100%", height = 300, className = '' }) => {
   return (
     <div className={`${styles.chartContainer} ${className}`}>
-      <ResponsiveContainer width={width} height={height}>
+      <ResponsiveContainer width={width as number | `${number}%`} height={height as number | `${number}%`}>
         {children}
       </ResponsiveContainer>
     </div>

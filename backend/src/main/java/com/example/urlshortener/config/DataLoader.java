@@ -41,6 +41,11 @@ public class DataLoader {
     @Transactional
     public CommandLineRunner loadData() {
         return args -> {
+            if (userRepository.count() > 0) {
+                System.out.println("Data already exists, skipping sample data loading.");
+                return;
+            }
+
             // Create users
             User user1 = new User(null, "john.doe@example.com", passwordEncoder.encode("password"), "John", "Doe", true, LocalDateTime.now(), LocalDateTime.now(), Arrays.asList());
             User user2 = new User(null, "jane.smith@example.com", passwordEncoder.encode("password"), "Jane", "Smith", true, LocalDateTime.now(), LocalDateTime.now(), Arrays.asList());

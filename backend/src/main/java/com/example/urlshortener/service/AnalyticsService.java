@@ -40,6 +40,8 @@ public class AnalyticsService {
         }
 
         UrlAnalyticsDto analytics = new UrlAnalyticsDto();
+        analytics.setShortCode(url.getShortCode());
+        analytics.setOriginalUrl(url.getOriginalUrl());
         analytics.setTotalClicks(url.getTotalClicks());
         // Note: uniqueVisitors is not directly calculable from the current schema without additional logic
         // For now, we will omit it or assume it's equal to totalClicks for simplicity or add a dummy value
@@ -112,7 +114,6 @@ public class AnalyticsService {
         }
     }
 }
-
 
 
 

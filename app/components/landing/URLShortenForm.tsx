@@ -3,9 +3,16 @@
 import React, { useState } from 'react';
 import { useToast } from '@/components/shared/Toast';
 import styles from './URLShortenForm.module.css';
+import api, { formatApiError } from '@/lib/api';
 
 interface URLShortenFormProps {
   onShorten?: (shortUrl: string | null) => void;
+}
+
+interface UrlResponseDto {
+  shortCode: string;
+  shortUrl: string;
+  originalUrl: string;
 }
 
 const URLShortenForm: React.FC<URLShortenFormProps> = ({ onShorten }) => {
@@ -21,21 +28,23 @@ const URLShortenForm: React.FC<URLShortenFormProps> = ({ onShorten }) => {
     setError(null);
     setShortenedUrl(null);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    if (longUrl.includes('invalid')) {
-      setError('Invalid URL provided. Please try again.');
-      showToast('Invalid URL provided.', 'error');
-    } else {
-      const mockShortUrl = `http://short.url/${Math.random().toString(36).substring(2, 8)}`;
-      setShortenedUrl(mockShortUrl);
+    try {
+      const response = await api<UrlResponseDto>('/shorten/public', {
+        method: 'POST',
+        body: JSON.stringify({ originalUrl: longUrl }),
+      });
+      setShortenedUrl(response.shortUrl);
       showToast('URL shortened successfully!', 'success');
       if (onShorten) {
-        onShorten(mockShortUrl);
+        onShorten(response.shortUrl);
       }
+    } catch (err: any) {
+      const errorMessage = formatApiError(err, 'Failed to shorten URL.');
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

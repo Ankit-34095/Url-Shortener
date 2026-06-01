@@ -11,7 +11,7 @@ interface TimeSeriesChartProps {
 
 const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ data }) => {
   if (!data || data.length === 0) {
-    return <div className={styles.noData}>No data available for this period.</div>;
+    return <div className={styles.noData}>Data not found.</div>;
   }
 
   return (

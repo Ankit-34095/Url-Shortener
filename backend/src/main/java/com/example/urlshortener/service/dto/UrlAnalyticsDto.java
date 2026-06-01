@@ -11,13 +11,14 @@ import java.util.List;
 @AllArgsConstructor
 public class UrlAnalyticsDto {
     // A distinct identifier for commit purposes (DTO for comprehensive URL analytics data)
+    private String shortCode;
+    private String originalUrl;
     private Long totalClicks;
     private Long uniqueVisitors;
     private List<DailyClicksDto> dailyClicks;
     private List<ReferrerStatsDto> topReferrers;
     private List<CountryStatsDto> topCountries;
 }
-
 
 
 
