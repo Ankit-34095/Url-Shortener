@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,9 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Optional;
+
 
 @Service
 @Transactional
@@ -51,8 +49,6 @@ public class UrlService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired(required = false)
-    private RedisTemplate<String, String> redisTemplate; // Redis caching for performance
 
     @Autowired
     private ShortCodeGenerator shortCodeGenerator;
@@ -63,8 +59,6 @@ public class UrlService {
     @Value("${app.base-url}")
     private String baseUrl;
 
-    private static final String URL_CACHE_PREFIX = "url:";
-    private static final Duration CACHE_TTL = Duration.ofHours(24);
 
     public UrlResponseDto createShortUrl(CreateUrlRequestDto request, Long userId) {
         // Validate original URL
@@ -96,9 +90,6 @@ public class UrlService {
         }
 
         Url savedUrl = urlRepository.save(url);
-
-        // Cache the mapping
-        cacheUrlMapping(shortCode, savedUrl.getOriginalUrl());
         logger.info("Created short URL: {} for original: {}", shortCode, request.getOriginalUrl());
 
         return mapToUrlResponseDto(savedUrl);
@@ -106,15 +97,7 @@ public class UrlService {
 
     @Transactional(readOnly = true)
     public String getOriginalUrl(String shortCode) {
-        // Try Redis cache first
-        if (redisTemplate != null) {
-            String originalUrl = redisTemplate.opsForValue().get(URL_CACHE_PREFIX + shortCode);
-            if (originalUrl != null) {
-                logger.debug("Cache hit for short code: {}", shortCode);
-                return originalUrl;
-            }
-        }
-        logger.debug("Cache miss for short code: {}. Fetching from DB.", shortCode);
+        logger.debug("Fetching original URL for short code: {}", shortCode);
 
         // Fallback to database
         Url url = urlRepository.findByShortCode(shortCode)
@@ -126,11 +109,6 @@ public class UrlService {
 
         if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new UrlExpiredException("URL has expired");
-        }
-
-        // Cache for future requests
-        if (redisTemplate != null) {
-            cacheUrlMapping(shortCode, url.getOriginalUrl());
         }
 
         return url.getOriginalUrl();
@@ -229,8 +207,6 @@ public class UrlService {
                 throw new InvalidUrlException("Invalid URL format");
             }
             url.setOriginalUrl(request.getOriginalUrl());
-            // Invalidate cache if original URL changes
-            invalidateCache(shortCode);
         }
         if (request.getTitle() != null) {
             url.setTitle(request.getTitle());
@@ -240,7 +216,6 @@ public class UrlService {
                 throw new ShortCodeAlreadyExistsException("Custom code already exists");
             }
             url.setShortCode(request.getShortCode());
-            invalidateCache(shortCode); // Invalidate old cache
         }
         if (request.getDescription() != null) {
             url.setDescription(request.getDescription());
@@ -253,10 +228,6 @@ public class UrlService {
         }
 
         Url updatedUrl = urlRepository.save(url);
-        // Refresh cache immediately with updated URL
-        if (redisTemplate != null) {
-            cacheUrlMapping(updatedUrl.getShortCode(), updatedUrl.getOriginalUrl()); // Use updated short code for cache key
-        }
         logger.info("Updated URL {} (short code: {}) by user {}", updatedUrl.getId(), updatedUrl.getShortCode(), userId);
         return mapToUrlDetailsDto(updatedUrl);
     }
@@ -269,9 +240,6 @@ public class UrlService {
         // Soft delete
         url.setIsActive(false);
         urlRepository.save(url);
-
-        // Remove from cache
-        invalidateCache(shortCode);
         logger.info("Deactivated URL (short code: {}) by user {}", shortCode, userId);
     }
 
@@ -281,7 +249,6 @@ public class UrlService {
         validateUserOwnership(url, userId);
         url.setIsActive(false);
         urlRepository.save(url);
-        invalidateCache(shortCode);
         logger.info("Deactivated URL (short code: {}) by user {}", shortCode, userId);
         return mapToUrlDetailsDto(url);
     }
@@ -292,27 +259,10 @@ public class UrlService {
         validateUserOwnership(url, userId);
         url.setIsActive(true);
         urlRepository.save(url);
-        if (redisTemplate != null) {
-            cacheUrlMapping(shortCode, url.getOriginalUrl());
-        }
         logger.info("Activated URL (short code: {}) by user {}", shortCode, userId);
         return mapToUrlDetailsDto(url);
     }
 
-
-    private void cacheUrlMapping(String shortCode, String originalUrl) {
-        if (redisTemplate == null) return;
-        redisTemplate.opsForValue().set(
-            URL_CACHE_PREFIX + shortCode,
-            originalUrl,
-            CACHE_TTL
-        );
-    }
-
-    private void invalidateCache(String shortCode) {
-        if (redisTemplate == null) return;
-        redisTemplate.delete(URL_CACHE_PREFIX + shortCode);
-    }
 
     private String generateUniqueShortCode() {
         String shortCode;
