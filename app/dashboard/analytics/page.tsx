@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import api, { formatApiError } from '@/lib/api';
-import { getCookie } from 'cookies-next';
 
 interface URLItem {
   id: number;
@@ -30,17 +29,10 @@ const AnalyticsPage = () => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      const token = getCookie('token') as string | undefined;
-      if (!token) {
-        setError('You must be logged in to view analytics.');
-        setLoading(false);
-        return;
-      }
-
       try {
         const response: UrlPageResponse = await api<UrlPageResponse>(
           '/urls?page=0&size=100&sortBy=createdAt&sortDir=desc',
-          { method: 'GET', token }
+          { method: 'GET' }
         );
         setUrls(response.content);
       } catch (err: any) {

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getCookie } from 'cookies-next';
 import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
 import MetricsCards from '@/components/analytics/MetricsCards';
 import TimeSeriesChart from '@/components/analytics/TimeSeriesChart';
@@ -50,17 +49,9 @@ const AnalyticsDetailPage = () => {
       setLoading(true);
       setError(null);
 
-      const token = getCookie('token') as string | undefined;
-      if (!token) {
-        setError('You must be logged in to view analytics.');
-        setLoading(false);
-        return;
-      }
-
       try {
         const response = await api<UrlAnalytics>(`/analytics/${shortId}`, {
           method: 'GET',
-          token,
         });
         setAnalytics(response);
       } catch (err) {

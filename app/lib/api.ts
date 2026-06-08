@@ -32,15 +32,30 @@ function isJwtExpired(token: string): boolean {
   }
 }
 
+function getStoredAuthToken(): string | null {
+  return typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+}
+
+function getUsableAuthToken(...tokens: Array<string | undefined | null>): string | null {
+  for (const token of tokens) {
+    if (token && !isJwtExpired(String(token))) {
+      return String(token);
+    }
+  }
+
+  return null;
+}
+
 async function api<T>(
   endpoint: string,
   options?: RequestOptions
 ): Promise<T> {
   const { token, headers, ...customConfig } = options || {};
   const resolvedToken = await Promise.resolve(token);
-  const authToken = resolvedToken || (typeof window !== 'undefined' ? localStorage.getItem('authToken') : null);
+  const storedToken = getStoredAuthToken();
+  const authToken = getUsableAuthToken(resolvedToken ? String(resolvedToken) : null, storedToken);
 
-  if (authToken && isJwtExpired(String(authToken))) {
+  if ((resolvedToken || storedToken) && !authToken) {
     return Promise.reject({
       message: 'Session expired. Please log in again.',
       status: 401,
