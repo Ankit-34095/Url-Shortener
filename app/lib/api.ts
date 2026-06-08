@@ -1,3 +1,5 @@
+import { getCookie } from 'cookies-next';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081/api';
 
 interface RequestOptions extends RequestInit {
@@ -36,6 +38,15 @@ function getStoredAuthToken(): string | null {
   return typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 }
 
+async function getCookieAuthToken(): Promise<string | null> {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const cookieToken = await Promise.resolve(getCookie('token'));
+  return cookieToken ? String(cookieToken) : null;
+}
+
 function getUsableAuthToken(...tokens: Array<string | undefined | null>): string | null {
   for (const token of tokens) {
     if (token && !isJwtExpired(String(token))) {
@@ -53,15 +64,8 @@ async function api<T>(
   const { token, headers, ...customConfig } = options || {};
   const resolvedToken = await Promise.resolve(token);
   const storedToken = getStoredAuthToken();
-  const authToken = getUsableAuthToken(resolvedToken ? String(resolvedToken) : null, storedToken);
-
-  if ((resolvedToken || storedToken) && !authToken) {
-    return Promise.reject({
-      message: 'Session expired. Please log in again.',
-      status: 401,
-      statusText: 'Unauthorized',
-    });
-  }
+  const cookieToken = await getCookieAuthToken();
+  const authToken = getUsableAuthToken(resolvedToken ? String(resolvedToken) : null, storedToken, cookieToken);
 
   const config: RequestInit = {
     method: options?.method || 'GET',
