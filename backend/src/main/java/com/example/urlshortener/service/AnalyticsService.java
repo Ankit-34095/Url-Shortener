@@ -88,11 +88,14 @@ public class AnalyticsService {
         return mapToCountryStatsDto(topCountries);
     }
 
-    private List<DailyClicksDto> mapToDailyClicksDto(List<Object[]> dailyStats) {
-        return dailyStats.stream()
-                .map(obj -> new DailyClicksDto((Date) obj[0], ((BigInteger) obj[1]).longValue()))
-                .collect(Collectors.toList());
-    }
+    private List<DailyClicksDto> mapToDailyClicksDto(List<Object[]> results) {
+    return results.stream()
+        .map(row -> new DailyClicksDto(
+            row[0].toString(),
+            ((Number) row[1]).longValue()
+        ))
+        .toList();
+}
 
     private List<ReferrerStatsDto> mapToReferrerStatsDto(List<Object[]> topReferrers) {
         return topReferrers.stream()
