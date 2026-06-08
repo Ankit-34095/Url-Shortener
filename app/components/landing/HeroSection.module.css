@@ -140,13 +140,6 @@
   background-color: #16a34a;
 }
 
-.usersWorldwide {
-  margin-top: 3rem;
-  font-size: 1.125rem;
-  opacity: 0.8;
-  animation: fadeInUp 1s ease-out forwards 0.5s;
-}
-
 @keyframes fadeInDown {
   from {
     opacity: 0;

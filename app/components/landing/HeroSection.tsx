@@ -45,9 +45,6 @@ const HeroSection = () => {
           </div>
         )}
 
-        <div className={styles.usersWorldwide}>
-          Join 10,000+ users worldwide!
-        </div>
       </div>
     </section>
   );
