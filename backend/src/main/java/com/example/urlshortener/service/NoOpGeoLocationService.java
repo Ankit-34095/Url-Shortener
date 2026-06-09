@@ -27,7 +27,7 @@ public class NoOpGeoLocationService implements GeoLocationService {
                 return;
             }
 
-            String apiUrl = "https://ipapi.co/" + ip + "/json/";
+            String apiUrl = "https://ipwho.is/" + ip;
 
             IpApiResponse response =
                     restTemplate.getForObject(
