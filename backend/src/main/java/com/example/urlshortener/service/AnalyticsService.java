@@ -88,28 +88,33 @@ public class AnalyticsService {
         return mapToCountryStatsDto(topCountries);
     }
 
-    private List<DailyClicksDto> mapToDailyClicksDto(List<Object[]> results) {
+  private List<DailyClicksDto> mapToDailyClicksDto(List<Object[]> results) {
     return results.stream()
-        .map(row -> new DailyClicksDto(
-            row[0].toString(),
-            ((Number) row[1]).longValue()
-        ))
-        .toList();
+            .map(row -> new DailyClicksDto(
+                    (Date) row[0],
+                    ((Number) row[1]).longValue()
+            ))
+            .collect(Collectors.toList());
 }
 
     private List<ReferrerStatsDto> mapToReferrerStatsDto(List<Object[]> topReferrers) {
-        return topReferrers.stream()
-                .map(obj -> new ReferrerStatsDto((String) obj[0], ((BigInteger) obj[1]).longValue()))
-                .collect(Collectors.toList());
-    }
+    return topReferrers.stream()
+            .map(obj -> new ReferrerStatsDto(
+                    (String) obj[0],
+                    ((Number) obj[1]).longValue()
+            ))
+            .collect(Collectors.toList());
+}
 
     private List<CountryStatsDto> mapToCountryStatsDto(List<Object[]> topCountries) {
-        // In a real scenario, map country codes to full names using an external service or a local lookup table.
-        // For now, we'll just use the country code as the name.
-        return topCountries.stream()
-                .map(obj -> new CountryStatsDto((String) obj[0], (String) obj[0], ((BigInteger) obj[1]).longValue()))
-                .collect(Collectors.toList());
-    }
+    return topCountries.stream()
+            .map(obj -> new CountryStatsDto(
+                    (String) obj[0],
+                    (String) obj[0],
+                    ((Number) obj[1]).longValue()
+            ))
+            .collect(Collectors.toList());
+}
 
     private void validateUserOwnership(Url url, Long userId) {
         if (userId != null && (url.getUser() == null || !url.getUser().getId().equals(userId))) {
