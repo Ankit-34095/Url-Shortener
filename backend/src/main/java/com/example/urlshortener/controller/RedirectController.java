@@ -23,7 +23,19 @@ public class RedirectController {
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> redirect(@PathVariable String shortCode, HttpServletRequest request) {
         String userAgent = request.getHeader("User-Agent");
-        String ipAddress = request.getRemoteAddr();
+        String ipAddress = request.getHeader("CF-Connecting-IP");
+
+            if (ipAddress == null || ipAddress.isBlank()) {
+                ipAddress = request.getHeader("X-Forwarded-For");
+            }
+            
+            if (ipAddress != null && ipAddress.contains(",")) {
+                ipAddress = ipAddress.split(",")[0].trim();
+            }
+            
+            if (ipAddress == null || ipAddress.isBlank()) {
+                ipAddress = request.getRemoteAddr();
+            }
         String referrer = request.getHeader("Referer");
         String originalUrl = urlService.getOriginalUrlAndLogClick(shortCode, ipAddress, userAgent, referrer);
         HttpHeaders headers = new HttpHeaders();
