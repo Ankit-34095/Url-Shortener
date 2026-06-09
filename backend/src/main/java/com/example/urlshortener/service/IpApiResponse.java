@@ -5,7 +5,8 @@ import lombok.Data;
 @Data
 public class IpApiResponse {
 
-    private String country;
+    private boolean success;
     private String country_code;
+    private String country;
     private String city;
 }
