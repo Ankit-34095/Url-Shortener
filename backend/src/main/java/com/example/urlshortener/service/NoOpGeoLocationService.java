@@ -35,20 +35,29 @@ public class NoOpGeoLocationService implements GeoLocationService {
                             IpApiResponse.class
                     );
 
-            if (response != null) {
+           if (response != null && response.isSuccess()) {
 
-                click.setCountryCode(response.getCountry_code());
-                click.setCity(response.getCity());
+    click.setCountryCode(
+            response.getCountry_code() != null
+                    ? response.getCountry_code()
+                    : "NA"
+    );
 
-            } else {
+    click.setCity(
+            response.getCity() != null
+                    ? response.getCity()
+                    : "Unknown"
+    );
 
-                click.setCountryCode("Unknown");
-                click.setCity("Unknown");
-            }
+} else {
+
+    click.setCountryCode("NA");
+    click.setCity("Unknown");
+}
 
         } catch (Exception e) {
 
-            click.setCountryCode("Unknown");
+            click.setCountryCode("NA");
             click.setCity("Unknown");
 
             System.err.println(
