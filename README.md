@@ -147,18 +147,4 @@ http://localhost:3000
 * Next.js deployment on Vercel
 * Connected to the deployed Spring Boot backend
 
----
 
-## Screenshots
-
-### Home Page
-
-*Add screenshot here*
-
-### Dashboard
-
-*Add screenshot here*
-
-### Analytics
-
-*Add screenshot here*
