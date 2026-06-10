@@ -1,36 +1,164 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# URL Shortener
+
+A full-stack URL shortening service that allows users to create, manage, and analyze shortened URLs. The application provides secure authentication, custom short links, click tracking, and analytics through a modern and responsive dashboard.
+
+## Live Demo
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://url-shortener-sooty-chi.vercel.app/)
+
+---
+
+## Features
+
+### URL Management
+
+* Create short URLs
+* Create custom short URLs
+* Add titles and descriptions
+* Set expiration dates
+* Activate and deactivate URLs
+* Delete URLs
+* Search and manage URLs through a dashboard
+
+### Authentication
+
+* User Registration
+* User Login
+* JWT-based Authentication
+* Remember Me Support
+
+### Analytics
+
+* Total Click Tracking
+* Daily Click Statistics
+* Referrer Analytics
+* Country-wise Analytics
+
+### Public Access
+
+* Public URL shortening without authentication
+* Fast URL redirection using short links
+
+### User Experience
+
+* Responsive design
+* Modern dashboard interface
+* Copy-to-clipboard functionality
+* Search and pagination support
+
+---
+
+## Tech Stack
+
+| Layer          | Technology                              |
+| -------------- | --------------------------------------- |
+| Frontend       | Next.js, React, TypeScript, CSS Modules |
+| Backend        | Spring Boot, Java 17, Gradle            |
+| Database       | PostgreSQL                              |
+| Authentication | JWT, BCrypt                             |
+| Charts         | Recharts                                |
+| Icons          | Font Awesome, React Icons               |
+
+---
+
+## Project Structure
+
+```text
+├── app/                    # Next.js App Router pages
+├── backend/                # Spring Boot backend
+├── gradle/                 # Gradle wrapper files
+├── public/                 # Static assets
+├── .gitignore
+├── README.md
+├── eslint.config.mjs
+├── gradlew
+├── gradlew.bat
+├── next.config.ts
+├── package.json
+├── package-lock.json
+└── tsconfig.json
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+* Node.js
+* Java 17 JDK
+* PostgreSQL
+
+### Installation
+
+```bash
+git clone https://github.com/Ankit-34095/Url-Shortener.git
+cd Url-Shortener
+
+# Install frontend dependencies
+npm install
+
+# Build backend
+cd backend
+./gradlew bootJar
+```
+
+---
+
+## Running Locally
+
+### Backend
+
+```bash
+cd backend
+./gradlew bootRun
+```
+
+Backend runs on:
+
+```text
+http://localhost:8081
+```
+
+### Frontend
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Frontend runs on:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+### Backend (Render)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Dockerized Spring Boot deployment
+* PostgreSQL database integration
+* Environment-based configuration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Frontend (Vercel)
 
-## Deploy on Vercel
+* Next.js deployment on Vercel
+* Connected to the deployed Spring Boot backend
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Screenshots
+
+### Home Page
+
+*Add screenshot here*
+
+### Dashboard
+
+*Add screenshot here*
+
+### Analytics
+
+*Add screenshot here*
